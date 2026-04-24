@@ -307,15 +307,46 @@ async function fetchKline(symbol, tf) {
 }
 
 /* ── COINGECKO ──────────────────────────────────────────────── */
+async function resolveGeckoId(ticker) {
+  // 1. Check hardcoded map
+  if (GECKO_IDS[ticker]) return GECKO_IDS[ticker];
+
+  // 2. Try lowercase slug directly (works for many coins)
+  const slug = ticker.toLowerCase();
+  try {
+    const probe = await fetchWithTimeout(
+      `${CFG.GECKO_API}/coins/${slug}?localization=false&tickers=false&community_data=false&developer_data=false`
+    ).then(r => r.json());
+    if (probe.id && !probe.error) return probe.id;
+  } catch (_) {}
+
+  // 3. Use CoinGecko search to find the correct slug
+  try {
+    const search = await fetchWithTimeout(
+      `${CFG.GECKO_API}/search?query=${encodeURIComponent(ticker)}`
+    ).then(r => r.json());
+    const coins = search.coins || [];
+    // Prefer exact symbol match
+    const exact = coins.find(c => c.symbol.toUpperCase() === ticker);
+    if (exact) return exact.id;
+    // Otherwise take top result
+    if (coins.length) return coins[0].id;
+  } catch (_) {}
+
+  return slug; // last resort
+}
+
 async function fetchGecko(ticker) {
-  const id = GECKO_IDS[ticker.toUpperCase()] || ticker.toLowerCase();
+  const id = await resolveGeckoId(ticker.toUpperCase());
   try {
     const [coin, mkt] = await Promise.allSettled([
       fetchWithTimeout(`${CFG.GECKO_API}/coins/${id}?localization=false&tickers=false&community_data=true&developer_data=false`).then(r => r.json()),
       fetchWithTimeout(`${CFG.GECKO_API}/coins/markets?vs_currency=usd&ids=${id}&order=market_cap_desc&per_page=1&page=1&sparkline=false&price_change_percentage=1h,24h,7d`).then(r => r.json()),
     ]);
 
-    const c  = coin.status === 'fulfilled' ? coin.value : null;
+    const raw = coin.status === 'fulfilled' ? coin.value : null;
+    // Guard: CoinGecko returns {error:"coin not found"} with HTTP 200
+    const c  = (raw && !raw.error) ? raw : null;
     const m  = mkt.status  === 'fulfilled' && mkt.value.length ? mkt.value[0] : null;
     const md = c?.market_data;
 
@@ -531,28 +562,32 @@ function startFundingCountdown(nextFundingMs) {
    RENDERERS — SINGLE COIN
 ══════════════════════════════════════════════════════════════ */
 
-function renderCoinIdentity(gecko) {
-  if (!gecko) return;
+function renderCoinIdentity(gecko, fallbackTicker) {
+  // Always reset logo first
   const logo = $('coin-logo');
+  logo.onload  = null;
+  logo.onerror = null;
   logo.src = '';
   logo.style.display = 'none';
-  if (gecko.image) {
+
+  if (gecko?.image) {
     logo.onload  = () => { logo.style.display = 'block'; };
     logo.onerror = () => { logo.style.display = 'none'; };
     logo.src = gecko.image;
   }
 
-  $('coin-symbol').textContent  = gecko.symbol || '—';
-  $('coin-name').textContent    = gecko.name   || '—';
-  $('coin-rank').textContent    = gecko.marketCapRank ? `#${gecko.marketCapRank} BY MARKET CAP` : '—';
-  $('coin-genesis').textContent = gecko.genesis    || '—';
-  $('coin-algo').textContent    = gecko.algorithm  || 'N/A';
-  $('coin-watchlist').textContent = gecko.watchlist ? fNum(gecko.watchlist) : '—';
+  // Always show at minimum the ticker symbol we searched
+  $('coin-symbol').textContent    = gecko?.symbol || fallbackTicker || '—';
+  $('coin-name').textContent      = gecko?.name   || (fallbackTicker ? fallbackTicker + ' (no CoinGecko data)' : '—');
+  $('coin-rank').textContent      = gecko?.marketCapRank ? `#${gecko.marketCapRank} BY MARKET CAP` : '—';
+  $('coin-genesis').textContent   = gecko?.genesis    || '—';
+  $('coin-algo').textContent      = gecko?.algorithm  || 'N/A';
+  $('coin-watchlist').textContent = gecko?.watchlist  ? fNum(gecko.watchlist) : '—';
 
   // Categories
   const catEl = $('coin-categories');
   catEl.innerHTML = '';
-  (gecko.categories || []).slice(0, 4).forEach(cat => {
+  (gecko?.categories || []).slice(0, 4).forEach(cat => {
     const tag = document.createElement('span');
     tag.className   = 'category-tag';
     tag.textContent = cat;
@@ -560,7 +595,7 @@ function renderCoinIdentity(gecko) {
   });
 
   // Sentiment
-  if (gecko.sentimentUp != null) {
+  if (gecko?.sentimentUp != null) {
     $('sentiment-up').textContent   = gecko.sentimentUp.toFixed(1) + '% BULLISH';
     $('sentiment-down').textContent = gecko.sentimentDown.toFixed(1) + '% BEARISH';
     $('sentiment-fill').style.width = gecko.sentimentUp + '%';
@@ -811,6 +846,8 @@ async function fetchCoin() {
 
   // UI: show loading — reset stale image immediately
   const _logo = $('coin-logo');
+  _logo.onload  = null;
+  _logo.onerror = null;
   _logo.src = '';
   _logo.style.display = 'none';
 
@@ -874,7 +911,7 @@ async function fetchCoin() {
   $('loading-state').style.display = 'none';
   $('coin-grid').style.display     = 'flex';
 
-  renderCoinIdentity(gecko);
+  renderCoinIdentity(gecko, ticker);
   renderPriceAction(market, gecko);
   renderOHLC(candles);
   renderFunding(market);
