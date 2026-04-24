@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRYPTEX — Market Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="main.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       BACKGROUND GRID OVERLAY
+  ════════════════════════════════════════════════ -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- ═══════════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">CRYPTEX</span>
+        <span class="logo-bracket">]</span>
+      </div>
+      <div class="header-sub">MARKET INTELLIGENCE TERMINAL</div>
+    </div>
+    <div class="header-right">
+      <div class="status-indicator">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">READY</span>
+      </div>
+      <div class="header-time" id="header-time">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN TABS
+  ════════════════════════════════════════════════ -->
+  <nav class="main-nav">
+    <button class="nav-tab active" data-tab="single">
+      <span class="tab-icon">◈</span>
+      SINGLE COIN
+    </button>
+    <button class="nav-tab" data-tab="scanner">
+      <span class="tab-icon">⊞</span>
+      MARKET SCANNER
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- ─────────────────────────────────────────
+         TAB 1: SINGLE COIN
+    ────────────────────────────────────────── -->
+    <section class="tab-panel active" id="tab-single">
+
+      <!-- Controls Bar -->
+      <div class="controls-bar">
+        <div class="search-wrapper">
+          <span class="search-prefix">TICKER://</span>
+          <input
+            type="text"
+            id="coin-input"
+            class="coin-input"
+            placeholder="BTC"
+            maxlength="10"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="tf-selector" id="tf-selector-single">
+          <button class="tf-btn" data-tf="5m">5M</button>
+          <button class="tf-btn" data-tf="15m">15M</button>
+          <button class="tf-btn" data-tf="30m">30M</button>
+          <button class="tf-btn active" data-tf="1h">1H</button>
+          <button class="tf-btn" data-tf="4h">4H</button>
+          <button class="tf-btn" data-tf="1d">1D</button>
+          <button class="tf-btn" data-tf="1w">1W</button>
+        </div>
+
+        <button class="fetch-btn" id="fetch-btn">
+          <span class="fetch-icon">⟳</span>
+          FETCH
+        </button>
+      </div>
+
+      <!-- Source Badge -->
+      <div class="source-bar" id="source-bar" style="display:none;">
+        <span class="source-label">DATA SOURCE:</span>
+        <span class="source-badge" id="source-badge">—</span>
+        <span class="source-label" style="margin-left:16px;">TIMEFRAME:</span>
+        <span class="source-badge" id="tf-badge">—</span>
+        <span class="source-label" style="margin-left:16px;">UPDATED:</span>
+        <span class="source-badge" id="updated-badge">—</span>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-title">ENTER A TICKER TO BEGIN</div>
+        <div class="empty-sub">Type any coin ticker above — BTC, ETH, SOL, etc.</div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" id="loading-state" style="display:none;">
+        <div class="loader-ring"></div>
+        <div class="loader-text" id="loader-text">FETCHING DATA...</div>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" id="error-state" style="display:none;">
+        <div class="error-icon">⚠</div>
+        <div class="error-title" id="error-title">FETCH FAILED</div>
+        <div class="error-sub" id="error-sub">All sources exhausted. Check ticker and try again.</div>
+      </div>
+
+      <!-- ── COIN DATA GRID ── -->
+      <div class="coin-grid" id="coin-grid" style="display:none;">
+
+        <!-- ROW 1: Coin Header + Price Action -->
+        <div class="grid-row row-hero">
+
+          <!-- Coin Identity -->
+          <div class="card card-identity">
+            <div class="coin-header">
+              <img class="coin-logo" id="coin-logo" src="" alt="" />
+              <div class="coin-names">
+                <div class="coin-symbol" id="coin-symbol">—</div>
+                <div class="coin-name" id="coin-name">—</div>
+                <div class="coin-rank" id="coin-rank">—</div>
+              </div>
+            </div>
+            <div class="coin-categories" id="coin-categories"></div>
+            <div class="coin-meta-row">
+              <div class="meta-item">
+                <div class="meta-label">GENESIS</div>
+                <div class="meta-value" id="coin-genesis">—</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">ALGORITHM</div>
+                <div class="meta-value" id="coin-algo">—</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">WATCHLIST</div>
+                <div class="meta-value" id="coin-watchlist">—</div>
+              </div>
+            </div>
+            <div class="sentiment-bar-wrapper">
+              <div class="sentiment-label-row">
+                <span class="bull-label" id="sentiment-up">—% BULLISH</span>
+                <span class="bear-label" id="sentiment-down">—% BEARISH</span>
+              </div>
+              <div class="sentiment-bar">
+                <div class="sentiment-fill" id="sentiment-fill" style="width:50%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price Action -->
+          <div class="card card-price-action">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> PRICE ACTION
+            </div>
+            <div class="price-hero">
+              <div class="price-main" id="price-main">—</div>
+              <div class="price-changes">
+                <div class="price-change-item">
+                  <span class="pc-label">1H</span>
+                  <span class="pc-value" id="pc-1h">—</span>
+                </div>
+                <div class="price-change-item">
+                  <span class="pc-label">24H</span>
+                  <span class="pc-value" id="pc-24h">—</span>
+                </div>
+                <div class="price-change-item">
+                  <span class="pc-label">7D</span>
+                  <span class="pc-value" id="pc-7d">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="price-grid">
+              <div class="pg-item">
+                <div class="pg-label">MARK PRICE</div>
+                <div class="pg-value" id="mark-price">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">INDEX PRICE</div>
+                <div class="pg-value" id="index-price">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">24H HIGH</div>
+                <div class="pg-value bull" id="high-24h">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">24H LOW</div>
+                <div class="pg-value bear" id="low-24h">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">VOLUME (BASE)</div>
+                <div class="pg-value" id="vol-base">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">VOLUME (QUOTE)</div>
+                <div class="pg-value" id="vol-quote">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">WEIGHTED AVG</div>
+                <div class="pg-value" id="weighted-avg">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">TRADE COUNT</div>
+                <div class="pg-value" id="trade-count">—</div>
+              </div>
+            </div>
+            <!-- TF OHLC -->
+            <div class="ohlc-row">
+              <div class="ohlc-label">TF OHLC</div>
+              <div class="ohlc-values">
+                <span class="ohlc-item"><span class="ohlc-tag">O</span><span id="ohlc-o">—</span></span>
+                <span class="ohlc-item"><span class="ohlc-tag bull">H</span><span id="ohlc-h">—</span></span>
+                <span class="ohlc-item"><span class="ohlc-tag bear">L</span><span id="ohlc-l">—</span></span>
+                <span class="ohlc-item"><span class="ohlc-tag">C</span><span id="ohlc-c">—</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Funding & Futures -->
+          <div class="card card-funding">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> FUNDING & FUTURES
+            </div>
+            <div class="funding-main">
+              <div class="funding-rate-display">
+                <div class="fr-label">CURRENT FUNDING RATE</div>
+                <div class="fr-value" id="funding-rate">—</div>
+                <div class="fr-sub" id="funding-sentiment">—</div>
+              </div>
+              <div class="funding-countdown">
+                <div class="fc-label">NEXT FUNDING IN</div>
+                <div class="fc-timer" id="funding-countdown">--:--:--</div>
+              </div>
+            </div>
+            <div class="price-grid">
+              <div class="pg-item">
+                <div class="pg-label">OPEN INTEREST</div>
+                <div class="pg-value" id="open-interest">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">OI VALUE (USD)</div>
+                <div class="pg-value" id="oi-value">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">INTEREST RATE</div>
+                <div class="pg-value" id="interest-rate">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">FUNDING INTERVAL</div>
+                <div class="pg-value" id="funding-interval">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">LAST FUNDING RATE</div>
+                <div class="pg-value" id="last-funding-rate">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">TURNOVER 24H</div>
+                <div class="pg-value" id="turnover-24h">—</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /row-hero -->
+
+        <!-- ROW 2: S/R + Supply/Demand + Liquidity -->
+        <div class="grid-row row-levels">
+
+          <!-- Support & Resistance -->
+          <div class="card card-sr">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> SUPPORT & RESISTANCE
+              <span class="card-tf-badge" id="sr-tf-badge">—</span>
+            </div>
+            <div class="levels-container" id="sr-levels">
+              <!-- Populated by JS -->
+              <div class="levels-placeholder">Awaiting data...</div>
+            </div>
+          </div>
+
+          <!-- Supply & Demand Zones -->
+          <div class="card card-zones">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> SUPPLY & DEMAND ZONES
+              <span class="card-tf-badge" id="sd-tf-badge">—</span>
+            </div>
+            <div class="zones-container" id="sd-zones">
+              <div class="levels-placeholder">Awaiting data...</div>
+            </div>
+          </div>
+
+          <!-- Liquidity Zones -->
+          <div class="card card-liquidity">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> LIQUIDITY ZONES
+            </div>
+            <div class="zones-container" id="liq-zones">
+              <div class="levels-placeholder">Awaiting data...</div>
+            </div>
+          </div>
+
+        </div><!-- /row-levels -->
+
+        <!-- ROW 3: Order Book + Market Stats -->
+        <div class="grid-row row-book">
+
+          <!-- Order Book -->
+          <div class="card card-orderbook">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> ORDER BOOK SNAPSHOT
+            </div>
+            <div class="orderbook-wrapper">
+              <div class="ob-side ob-asks">
+                <div class="ob-side-label bear">ASKS (SELL)</div>
+                <div class="ob-header">
+                  <span>PRICE</span>
+                  <span>SIZE</span>
+                  <span>TOTAL</span>
+                </div>
+                <div id="ob-asks">
+                  <div class="levels-placeholder">—</div>
+                </div>
+              </div>
+              <div class="ob-spread">
+                <div class="spread-label">SPREAD</div>
+                <div class="spread-value" id="ob-spread">—</div>
+                <div class="spread-pct" id="ob-spread-pct">—</div>
+              </div>
+              <div class="ob-side ob-bids">
+                <div class="ob-side-label bull">BIDS (BUY)</div>
+                <div class="ob-header">
+                  <span>PRICE</span>
+                  <span>SIZE</span>
+                  <span>TOTAL</span>
+                </div>
+                <div id="ob-bids">
+                  <div class="levels-placeholder">—</div>
+                </div>
+              </div>
+            </div>
+            <div class="ob-imbalance">
+              <div class="imb-label">BID/ASK IMBALANCE</div>
+              <div class="imb-bar">
+                <div class="imb-bid" id="imb-bid" style="width:50%"></div>
+                <div class="imb-ask" id="imb-ask" style="width:50%"></div>
+              </div>
+              <div class="imb-values">
+                <span class="bull" id="imb-bid-pct">50%</span>
+                <span class="bear" id="imb-ask-pct">50%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Market Stats -->
+          <div class="card card-market-stats">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> MARKET STATS
+            </div>
+            <div class="price-grid">
+              <div class="pg-item">
+                <div class="pg-label">MARKET CAP</div>
+                <div class="pg-value" id="market-cap">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">FDV</div>
+                <div class="pg-value" id="fdv">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">CIRCULATING SUPPLY</div>
+                <div class="pg-value" id="circ-supply">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">MAX SUPPLY</div>
+                <div class="pg-value" id="max-supply">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">ATH</div>
+                <div class="pg-value bull" id="coin-ath">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">ATH CHANGE</div>
+                <div class="pg-value bear" id="coin-ath-change">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">ATL</div>
+                <div class="pg-value bear" id="coin-atl">—</div>
+              </div>
+              <div class="pg-item">
+                <div class="pg-label">ATL CHANGE</div>
+                <div class="pg-value bull" id="coin-atl-change">—</div>
+              </div>
+            </div>
+
+            <!-- Multi-timeframe changes -->
+            <div class="card-header-label" style="margin-top:16px;">
+              <span class="card-label-icon">▸</span> PRICE CHANGE HISTORY
+            </div>
+            <div class="tf-changes" id="tf-changes">
+              <div class="tfc-item">
+                <span class="tfc-label">14D</span>
+                <span class="tfc-value" id="pc-14d">—</span>
+              </div>
+              <div class="tfc-item">
+                <span class="tfc-label">30D</span>
+                <span class="tfc-value" id="pc-30d">—</span>
+              </div>
+              <div class="tfc-item">
+                <span class="tfc-label">60D</span>
+                <span class="tfc-value" id="pc-60d">—</span>
+              </div>
+              <div class="tfc-item">
+                <span class="tfc-label">200D</span>
+                <span class="tfc-value" id="pc-200d">—</span>
+              </div>
+              <div class="tfc-item">
+                <span class="tfc-label">1Y</span>
+                <span class="tfc-value" id="pc-1y">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coin Info & Socials -->
+          <div class="card card-info">
+            <div class="card-header-label">
+              <span class="card-label-icon">▸</span> COIN INFO & SOCIALS
+            </div>
+            <div class="socials-grid" id="socials-grid">
+              <!-- Populated by JS -->
+            </div>
+            <div class="description-wrapper">
+              <div class="desc-label">ABOUT</div>
+              <div class="description-text" id="coin-description">—</div>
+              <button class="desc-toggle" id="desc-toggle">READ MORE</button>
+            </div>
+          </div>
+
+        </div><!-- /row-book -->
+
+      </div><!-- /coin-grid -->
+
+    </section><!-- /tab-single -->
+
+
+    <!-- ─────────────────────────────────────────
+         TAB 2: MARKET SCANNER
+    ────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-scanner">
+
+      <!-- Scanner Controls -->
+      <div class="controls-bar">
+        <div class="scanner-source-toggle">
+          <button class="src-btn active" data-src="binance">BINANCE</button>
+          <button class="src-btn" data-src="bybit">BYBIT</button>
+        </div>
+
+        <div class="tf-selector" id="tf-selector-scanner">
+          <button class="tf-btn" data-tf="5m">5M</button>
+          <button class="tf-btn" data-tf="15m">15M</button>
+          <button class="tf-btn" data-tf="30m">30M</button>
+          <button class="tf-btn active" data-tf="1h">1H</button>
+          <button class="tf-btn" data-tf="4h">4H</button>
+          <button class="tf-btn" data-tf="1d">1D</button>
+          <button class="tf-btn" data-tf="1w">1W</button>
+        </div>
+
+        <button class="fetch-btn" id="scanner-fetch-btn">
+          <span class="fetch-icon">⟳</span>
+          SCAN MARKET
+        </button>
+      </div>
+
+      <!-- Scanner Stats Bar -->
+      <div class="source-bar" id="scanner-stats-bar" style="display:none;">
+        <span class="source-label">PAIRS SCANNED:</span>
+        <span class="source-badge" id="scan-count">—</span>
+        <span class="source-label" style="margin-left:16px;">SOURCE:</span>
+        <span class="source-badge" id="scan-source">—</span>
+        <span class="source-label" style="margin-left:16px;">UPDATED:</span>
+        <span class="source-badge" id="scan-updated">—</span>
+      </div>
+
+      <!-- Scanner Loading -->
+      <div class="loading-state" id="scanner-loading" style="display:none;">
+        <div class="loader-ring"></div>
+        <div class="loader-text" id="scanner-loader-text">SCANNING MARKET...</div>
+      </div>
+
+      <!-- Scanner Empty -->
+      <div class="empty-state" id="scanner-empty">
+        <div class="empty-icon">⊞</div>
+        <div class="empty-title">READY TO SCAN</div>
+        <div class="empty-sub">Select timeframe and hit SCAN MARKET to fetch all pairs</div>
+      </div>
+
+      <!-- Scanner Category Tabs -->
+      <div class="scanner-nav" id="scanner-nav" style="display:none;">
+        <button class="scanner-tab active" data-category="gainers">▲ TOP GAINERS</button>
+        <button class="scanner-tab" data-category="losers">▼ TOP LOSERS</button>
+        <button class="scanner-tab" data-category="volume">◈ VOLUME</button>
+        <button class="scanner-tab" data-category="funding">⚡ FUNDING</button>
+        <button class="scanner-tab" data-category="oi">◉ OPEN INTEREST</button>
+        <button class="scanner-tab" data-category="momentum">⟶ MOMENTUM</button>
+      </div>
+
+      <!-- Scanner Results Table -->
+      <div class="scanner-table-wrapper" id="scanner-table-wrapper" style="display:none;">
+        <table class="scanner-table" id="scanner-table">
+          <thead id="scanner-thead">
+            <!-- Dynamic headers by JS -->
+          </thead>
+          <tbody id="scanner-tbody">
+            <!-- Dynamic rows by JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </section><!-- /tab-scanner -->
+
+  </main><!-- /main-content -->
+
+  <!-- ═══════════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <span>CRYPTEX v1.0 — DATA: BINANCE FAPI / BYBIT V5 / COINGECKO</span>
+    <span>NOT FINANCIAL ADVICE. FOR INFORMATIONAL USE ONLY.</span>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
