@@ -534,7 +534,13 @@ function startFundingCountdown(nextFundingMs) {
 function renderCoinIdentity(gecko) {
   if (!gecko) return;
   const logo = $('coin-logo');
-  if (gecko.image) { logo.src = gecko.image; logo.style.display = 'block'; }
+  logo.src = '';
+  logo.style.display = 'none';
+  if (gecko.image) {
+    logo.onload  = () => { logo.style.display = 'block'; };
+    logo.onerror = () => { logo.style.display = 'none'; };
+    logo.src = gecko.image;
+  }
 
   $('coin-symbol').textContent  = gecko.symbol || '—';
   $('coin-name').textContent    = gecko.name   || '—';
@@ -803,7 +809,11 @@ async function fetchCoin() {
   const symbol = ticker + 'USDT';
   const tf     = STATE.singleTf;
 
-  // UI: show loading
+  // UI: show loading — reset stale image immediately
+  const _logo = $('coin-logo');
+  _logo.src = '';
+  _logo.style.display = 'none';
+
   $('empty-state').style.display   = 'none';
   $('error-state').style.display   = 'none';
   $('coin-grid').style.display     = 'none';
